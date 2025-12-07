@@ -1,0 +1,1 @@
+import{i,s as t}from"./main-DDXJmDk5.js";/* empty css           */const o=document.querySelector("main");i("search","search",!0).then(()=>{const e=document.getElementById("loading");e&&e.remove(),o.classList.remove("hide"),t(!0)});

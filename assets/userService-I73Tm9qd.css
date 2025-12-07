@@ -1,0 +1,1 @@
+.user-row{max-width:900px;margin:10px auto;display:flex;gap:10px}.username{background-color:var(--main-background-color);flex-grow:1}.user-row div{box-shadow:0 1px 3px #0000001f,0 1px 2px #0000003d;transition:all .3s cubic-bezier(.25,.8,.25,1);padding:20px;border-radius:5px}article section h3{text-align:center}
