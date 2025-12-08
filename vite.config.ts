@@ -26,7 +26,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm,json}'],
         cleanupOutdatedCaches: true,
-        ignoreURLParametersMatching: [/^id$/, /^year$/, /^user$/, /^search$/, /^utm_/, /^fbclid$/],
+        ignoreURLParametersMatching: [/^id$/, /^year$/, /^user$/, /^search$/, /^sentFrom$/, /^background$/, /^undo$/, /^color$/, /^isTop$/, /^special$/, /^reverse$/, /^utm_/, /^fbclid$/],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.origin === 'https://fonts.googleapis.com',
