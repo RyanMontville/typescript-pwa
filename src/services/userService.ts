@@ -1,0 +1,229 @@
+import { ColorCount, ColorsCounts, ContentPair, ParagraphBlock, User, UserMain, UserStat } from "../models";
+import { getPixelDataForYear, getYearCounts } from "./canvasService";
+import { fetchHTML } from "../main";
+import { getHexForColor } from "../modules/utils";
+
+const baseURL: string = "https://raw.githubusercontent.com/TheRealMonte/data-files/refs/heads/main";
+
+export async function getAllUsers() {
+    try {
+        const userCSVData = await fetchHTML(`${baseURL}/allUsers.csv`);
+        if (userCSVData) {
+            //Split the csv file into lines
+            const lines = userCSVData.trim().split('\n');
+            //Define the column headers
+            const header = lines[0].split(',').map(h => h.trim());
+            const usernameIndex = header.indexOf('username');
+            const canvas2023Index = header.indexOf('canvas2023');
+            const canvas2024Index = header.indexOf('canvas2024');
+            const canvas2025Index = header.indexOf('canvas2025');
+            //Create the list of users
+            const userList: UserMain[] | null = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',');
+                if (values.length === header.length) {
+                    const user: UserMain = {
+                        type: 'UserMain',
+                        username: values[usernameIndex]?.trim() || '',
+                        canvas2023: +values[canvas2023Index]?.trim() == 1 || false,
+                        canvas2024: +values[canvas2024Index]?.trim() == 1 || false,
+                        canvas2025: +values[canvas2025Index]?.trim() == 1 || false,
+                    }
+                    userList.push(user)
+                } else {
+                    console.warn(`Skipping row ${i + 1} due to incorrect number of columns.`);
+                }
+            }
+            return userList;
+        } else {
+            throw new Error("Could not fetch users csv");
+        }
+    } catch (error: any) {
+        console.error(`Error creating user list: ${error}`);
+    }
+}
+
+export async function getAllUserStatsForYear(year: number) {
+    try {
+        const allUserCSVData = await fetchHTML(`${baseURL}/${year}/users.csv`);
+        if (allUserCSVData) {
+            //Split the csv file into lines
+            const lines = allUserCSVData.trim().split('\n');
+            //Define the column headers
+            const header = lines[0].split(',').map(h => h.trim());
+            const usernameIndex = header.indexOf('username');
+            const userRankIndex = header.indexOf('userRank');
+            const pixelCountIndex = header.indexOf('numPixels');
+            const xCordIndex = header.indexOf('xCoordinateTop');
+            const yCordIndex = header.indexOf('yCoordinateTop');
+            const cordCountIndex = header.indexOf('NumPixelsTop');
+
+            const userList: User[] = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',');
+                if (values.length === header.length) {
+                    const user: User = {
+                        type: 'User',
+                        username: values[usernameIndex]?.trim() || '',
+                        userRank: +values[userRankIndex]?.trim() || 0,
+                        pixelCount: +values[pixelCountIndex]?.trim() || 0,
+                        xCord: +values[xCordIndex]?.trim() || 0,
+                        yCord: +values[yCordIndex]?.trim() || 0,
+                        cordCount: +values[cordCountIndex]?.trim() || 0
+                    };
+                    userList.push(user);
+                } else {
+                    console.warn(`Skipping row ${i + 1} due to incorrect number of columns.`);
+                }
+            }
+            console.log("Loaded user data from csv");
+            return userList;
+        }
+    } catch (error) {
+        console.error(`Error getting all user stats for ${year}: ${error}`);
+    }
+}
+
+function rankingString(rank: number): string {
+    const lastTwoDigits: number = rank % 100;
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 13) {
+        return rank + "th";
+    }
+    const lastDigit: number = rank % 10;
+    switch (lastDigit) {
+        case 1:
+            return rank + "st";
+        case 2:
+            return rank + "nd";
+        case 3:
+            return rank + "rd";
+        default:
+            return rank + "th";
+    }
+}
+
+export async function getUserStats(username: string, year: number) {
+    const allUsersData: User[] | undefined = await getAllUserStatsForYear(year);
+    const totalUsers = getYearCounts(year);
+    if (allUsersData) {
+        const user: User | undefined = allUsersData.find(user => user['username'] === username);
+        if (user) {
+            let userStats: UserStat[] = [];
+            const rankStatP: ParagraphBlock = new ParagraphBlock([new ContentPair("text", `You ranked ${user['userRank']} out of ${totalUsers} users in ${year}`)]);
+            const rankStat: UserStat = new UserStat("left", "text", rankingString(user['userRank']), rankStatP);
+            userStats.push(rankStat);
+            const colorCountPlaceholder: UserStat = new UserStat("right", "", "colorCount", {parts: []});
+            userStats.push(colorCountPlaceholder);
+            const numColorsP: ParagraphBlock = new ParagraphBlock([new ContentPair("text", `You used ${await getNumColorsUsedForUsername(year, username)} out of the ${year===2023 ? "32" : "34"} colors`)]);
+            const numColorStat: UserStat = new UserStat("left", "icon", "colors", numColorsP);
+            userStats.push(numColorStat)
+            const pixelsPlacedP: ParagraphBlock = new ParagraphBlock([new ContentPair("text", `You placed ${user['pixelCount']} pixels throughout the event`)]);
+            const pixelsPlacedStat: UserStat = new UserStat("right", "icon", "grid_view", pixelsPlacedP);
+            userStats.push(pixelsPlacedStat);
+            const topCordP: ParagraphBlock = new ParagraphBlock([new ContentPair("text", `The coordinate you placed the most pixels on was (${user['xCord']}, ${user['yCord']}) - ${user['cordCount']} times (including the pixels you deleted)`)]);
+            const topCordStat: UserStat = new UserStat("left", "icon", "kid_star", topCordP);
+            userStats.push(topCordStat);
+            const drawLinks: UserStat = new UserStat("right", "", "drawLinks", {parts: []});
+            userStats.push(drawLinks);
+            return userStats;
+        }
+    }
+    return null;
+}
+
+export async function getColorCountsForYear(year: number) {
+    try {
+        const colorCSVData = await fetchHTML(`${baseURL}/${year}/color_count.csv`);
+        if (colorCSVData) {
+            //Split the csv file into lines
+            const lines = colorCSVData.trim().split('\n');
+            //Define the column headers
+            const header = lines[0].split(',').map(h => h.trim());
+
+            const colorCounts: ColorsCounts[] = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',');
+                if (values.length === header.length) {
+                    const colorCount: ColorsCounts = {
+                        username: values[0]?.trim() || '',
+                        black: +values[1]?.trim() || 0,
+                        darkGrey: +values[2]?.trim() || 0,
+                        deepGrey: +values[3]?.trim() || 0,
+                        mediumGrey: +values[4]?.trim() || 0,
+                        lightGrey: +values[5]?.trim() || 0,
+                        white: +values[6]?.trim() || 0,
+                        beige: +values[7]?.trim() || 0,
+                        peach: +values[8]?.trim() || 0,
+                        brown: +values[9]?.trim() || 0,
+                        chocolate: +values[10]?.trim() || 0,
+                        rust: +values[11]?.trim() || 0,
+                        orange: +values[12]?.trim() || 0,
+                        yellow: +values[13]?.trim() || 0,
+                        pastelYellow: +values[14]?.trim() || 0,
+                        lime: +values[15]?.trim() || 0,
+                        green: +values[16]?.trim() || 0,
+                        darkGreen: +values[17]?.trim() || 0,
+                        forest: +values[18]?.trim() || 0,
+                        darkTeal: +values[19]?.trim() || 0,
+                        lightTeal: +values[20]?.trim() || 0,
+                        aqua: +values[21]?.trim() || 0,
+                        azure: +values[22]?.trim() || 0,
+                        blue: +values[23]?.trim() || 0,
+                        navy: +values[24]?.trim() || 0,
+                        purple: +values[25]?.trim() || 0,
+                        mauve: +values[26]?.trim() || 0,
+                        magenta: +values[27]?.trim() || 0,
+                        pink: +values[28]?.trim() || 0,
+                        watermelon: +values[29]?.trim() || 0,
+                        red: +values[30]?.trim() || 0,
+                        rose: +values[31]?.trim() || 0,
+                        maroon: +values[32]?.trim() || 0,
+                        darkChocolate: +values[33]?.trim() || 0,
+                        darkPurple: +values[34]?.trim() || 0,
+                    };
+                    colorCounts.push(colorCount);
+                } else {
+                    console.warn(`Skipping row ${i + 1} due to incorrect number of columns.`);
+                }
+            }
+            console.log("Loaded color count data");
+            return colorCounts;
+        }
+        return null
+    } catch (error: any) {
+        console.error(`Failed to fetch color counts: ${error}`);
+        return null;
+    }
+}
+
+export async function GetColorCountForUsername(year: number, username: string) {
+    const colorCounts: ColorsCounts[] | null = await getColorCountsForYear(year);
+    if (colorCounts) {
+        let colorCountWithUsername: Omit<ColorsCounts, "username"> | undefined = colorCounts.find(count => count['username'] === username);
+        if (colorCountWithUsername) {
+            const keys = Object.keys(colorCountWithUsername);
+            const values = Object.values(colorCountWithUsername);
+            keys.shift();
+            values.shift();
+            let colors: ColorCount[] = [];
+            keys.forEach((key, index) => {
+                if (values[index] > 0) {
+                    const readableColor: string = key.replace(/([a-z])([A-Z])/g, "$1 $2",).toLowerCase();
+                    colors.push(new ColorCount(getHexForColor(readableColor), readableColor, values[index]));
+                }
+            });
+            colors.sort((a, b) => b.count - a.count);
+            return colors;
+        }
+    }
+    return null;
+}
+
+export async function getNumColorsUsedForUsername(year: number, username: string) {
+    const colorCounts: ColorCount[] | null = await GetColorCountForUsername(year, username);
+    if (colorCounts) {
+        return colorCounts.length;
+    } else {
+        return 0;
+    }
+}
