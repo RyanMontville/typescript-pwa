@@ -1,4 +1,7 @@
 const years: number[] = [2023, 2024, 2025];
+
+const baseURL: string = "https://raw.githubusercontent.com/RyanMontville/typescript-pwa/refs/heads/main";
+const imagesURL: string = "https://raw.githubusercontent.com/TheRealMonte/images/refs/heads/main";
 let year: number = 2025;
 // Get the year from the url
 const urlParams = new URLSearchParams(window.location.search);
@@ -49,7 +52,7 @@ export async function initializeApp(partentPage: string, currentPage: string, sh
 
   //Set logo year image
   const logoYear = document.getElementById('logo-year') as HTMLElement;
-  logoYear.setAttribute('src', `images/logo${year}.png`);
+  logoYear.setAttribute('src', `${imagesURL}/${year}/logo${year}.png`);
 
   function goToYearHomepage() {
     window.location.href = `index.html?year=${year}`
@@ -119,7 +122,7 @@ export async function fetchHTML(url: string) {
 async function loadHeader(partentPage: string, currentPage: string) {
   try {
     //Get the header html from the header file. Using a relative path broke on GitHub pages
-    const headerData = await fetchHTML('https://raw.githubusercontent.com/RyanMontville/typescript-pwa/refs/heads/main/templates/header.html');
+    const headerData = await fetchHTML(baseURL + '/templates/header.html');
     if (headerData) {
       //Create the header element and set the header HTML
       let header = document.createElement('header');
@@ -135,7 +138,7 @@ async function loadHeader(partentPage: string, currentPage: string) {
 async function loadNav() {
   try {
     //Get the nav HTML from the nav file
-    const navData = await fetchHTML('https://raw.githubusercontent.com/RyanMontville/typescript-pwa/refs/heads/main/templates/nav.html');
+    const navData = await fetchHTML(baseURL + '/templates/nav.html');
     if (navData) {
       //Create the nav element and set the innner HTML
       let nav = document.createElement('nav');
@@ -153,7 +156,7 @@ async function loadNav() {
 async function loadSearch() {
   try {
     //Get the search HTML from the search file
-    const searchData = await fetchHTML('https://raw.githubusercontent.com/RyanMontville/typescript-pwa/refs/heads/main/templates/search.html');
+    const searchData = await fetchHTML(baseURL + '/templates/search.html');
     if (searchData) {
       //Create the search container
       const searchGroup = document.createElement('form');
@@ -176,7 +179,7 @@ async function loadSearch() {
 async function loadFooter() {
   const footerPlaceholder = document.getElementById('footer-placeholder') as HTMLElement;
   try {
-    const footerData = await fetchHTML('https://raw.githubusercontent.com/RyanMontville/typescript-pwa/refs/heads/main/templates/footer.html');
+    const footerData = await fetchHTML(baseURL + '/templates/footer.html');
     if (footerData) {
       const footer = document.createElement('footer');
       footer.innerHTML = footerData;
@@ -191,7 +194,7 @@ async function loadPopUps() {
   const popupPlaceholder = document.getElementById('popup-placeholder') as HTMLElement;
   try {
     //Get the popups HTML from the popups file
-    const popUpsData = await fetchHTML('https://raw.githubusercontent.com/RyanMontville/typescript-pwa/refs/heads/main/templates/popups.html');
+    const popUpsData = await fetchHTML(baseURL + '/templates/popups.html');
     if (popUpsData) {
       //Create the popups
       const popUpsDiv = document.createElement('div');

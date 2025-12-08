@@ -1,1 +1,0 @@
-import{i as t}from"./main-1YQrQUBq.js";t("F.A.Q.","F.A.Q.",!0).then(()=>{const e=document.getElementById("loading");e&&e.remove();const i=document.querySelector("main");i&&i.classList.remove("hide")});
