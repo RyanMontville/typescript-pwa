@@ -73,7 +73,7 @@ async function displayUsersByRank() {
             usernameDiv.appendChild(usernameP);
             userRow.appendChild(usernameDiv);
             const canvas2025Link = document.createElement('a');
-            canvas2025Link.setAttribute('href', `user.html?user=${user['username']}&year=${year}`);
+            canvas2025Link.setAttribute('href', `user.html?username=${user['username']}&year=${year}`);
             canvas2025Link.setAttribute('class', 'btn mauve');
             canvas2025Link.textContent = `${year}`;
             userRow.appendChild(canvas2025Link);
