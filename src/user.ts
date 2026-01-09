@@ -1,9 +1,9 @@
 import { initializeApp, getYear, scrollAnimation } from "./main.js";
 import { getUserStats, GetColorCountForUsername } from "./services/userService.js";
-import { ColorCount, ContentPair, ParagraphBlock, UserStat, YearStat } from "./models.js";
-import { createHeader, createIconDiv, createLinkButton } from "./modules/utils.js";
-import { createUserStatBlock } from "./modules/statBlocks.js";
+import { ColorCount, JsonObject } from "./models.js";
+import { createHeader } from "./modules/utils.js";
 import { createColorCountPieChart } from "./modules/d3Graphics.js";
+import { getBlockStructure, renderTree } from "./modules/createNodeTree.js";
 
 let year: number = 0;
 let username: string = "";
@@ -11,99 +11,11 @@ const main = document.querySelector('main') as HTMLElement;
 
 let userColorCounts: ColorCount[] | null = null;
 
-function displayColorCounts(stat: UserStat) {
-    if (userColorCounts) {
-        const colorCountArticle = document.createElement('article');
-        colorCountArticle.setAttribute('class', stat['direction']);
-        const pieChartContainer = document.createElement('div');
-        pieChartContainer.setAttribute('id', 'colorCountsPieChart');
-        colorCountArticle.appendChild(pieChartContainer);
-        const colorSection = document.createElement('section');
-        colorSection.setAttribute('class', 'color-section');
-        const colorCountHeader = createHeader("h3", "Pixels placed by color:");
-        colorSection.appendChild(colorCountHeader);
-        const toolTip = document.createElement('div');
-        toolTip.setAttribute('id', 'tooltip');
-        colorSection.appendChild(toolTip);
-        colorCountArticle.appendChild(colorSection);
-        return colorCountArticle;
-    }
-}
-
-
-async function displayUserStats() {
-
-    if (username !== "") {
-        const userStats: UserStat[] | null = await getUserStats(username, year);
-        console.log(userStats);
-        if (userStats) {
-            const tempHeader = createHeader("h2", username);
-            main.appendChild(tempHeader);
-            userStats.forEach(async stat => {
-                if (stat['iconText'] == "colorCount") {
-                    const colorCountBlock = displayColorCounts(stat);
-                    if (colorCountBlock) {
-                        main.appendChild(colorCountBlock);
-                        if (userColorCounts) createColorCountPieChart(year, userColorCounts, "colorCountsPieChart", false, "slice");
-                    }
-                } else if (stat['iconText'] === "drawLinks") {
-                    const drawBlock = document.createElement('article');
-                    drawBlock.setAttribute('class', stat['direction']);
-                    const iconDiv = createIconDiv('icon', 'dashboard_customize');
-                    drawBlock.appendChild(iconDiv);
-                    const drawSection = document.createElement('section');
-                    const sectionHeader = createHeader("h3", `View your pixels placed in ${year}`);
-                    drawSection.appendChild(sectionHeader);
-                    const linkWrapper = document.createElement('div');
-                    linkWrapper.setAttribute('class', 'btn-wrapper');
-                    const whiteBackground = createLinkButton('white', `draw.html?sentFrom=user&username=${username}&year=${year}&background=white`, 'with white background', false);
-                    linkWrapper.appendChild(whiteBackground);
-                    const blackBackground = createLinkButton('black', `draw.html?sentFrom=user&username=${username}&year=${year}&background=black`, 'with black background', false);
-                    linkWrapper.appendChild(blackBackground);
-                    const transparentBackground = createLinkButton('dark-grey', `draw.html?sentFrom=user&username=${username}&year=${year}&background=transparent`, 'with transparent background', false);
-                    linkWrapper.appendChild(transparentBackground);
-                    drawSection.appendChild(linkWrapper);
-                    drawBlock.appendChild(drawSection);
-                    main.appendChild(drawBlock);
-                } else {
-                    const userStat = createUserStatBlock(stat);
-                    main.appendChild(userStat);
-                }
-            });
-
-        } else {
-            const sorryP: ParagraphBlock = new ParagraphBlock([new ContentPair("text", `${username} did not participate in Canvas ${year}`)]);
-            const sorryBlock = createUserStatBlock(new UserStat("left", "icon", "person_cancel", sorryP));
-            main.appendChild(sorryBlock);
-            const findP: ParagraphBlock = {
-                parts: [
-                    new ContentPair(`users?year=${year}`, "Click here"),
-                    new ContentPair("text", ` to view the list of users for Canvas ${year} and see if you can find your username`)
-                ]
-            }
-            const findBlock = createUserStatBlock(new UserStat("right", "icon", "person_search", findP));
-            main.appendChild(findBlock);
-            const messageP: ParagraphBlock = {
-                parts: [
-                    new ContentPair("text", `If you still can't find your username and you truely believe you did participate in ${year}, send a dm to `),
-                    new ContentPair("https://sh.itjust.works/u/the_real_monte", "@the_real_monte"),
-                    new ContentPair("text", " on Lemmy and we can check the database")
-                ]
-            }
-            const messageBlock = createUserStatBlock(new UserStat("left", "icon", "mail", messageP));
-            main.appendChild(messageBlock);
-        }
-    } else {
-        console.warn("Didn't find username")
-    }
-
-}
-
 initializeApp("users", "", true).then(async () => {
     year = getYear();
     // Get the username from the url
     const urlParams = new URLSearchParams(window.location.search);
-    const usernameParam: string | null = urlParams.get('user');
+    const usernameParam: string | null = urlParams.get('username');
     if (usernameParam) username = usernameParam;
     userColorCounts = await GetColorCountForUsername(year, username);
     await displayUserStats();
@@ -113,3 +25,96 @@ initializeApp("users", "", true).then(async () => {
     if (loading) loading.remove();
     scrollAnimation(true);
 });
+
+function displayNoStatsBlocks(username: string | null, year: number) {
+    const noStats: JsonObject = {
+        year: year,
+        username: username ? username : "You",
+        blocks: [
+            {
+                type: "standard",
+                layout: "left",
+                icon: "person_cancel",
+                content: [
+                    `${username} did not participate in Canvas ${year}`
+                ]
+            },
+            {
+                type: "standard",
+                layout: "left",
+                content: [
+                    [
+                        {
+                            linkText: "Click here",
+                            page: "/users",
+                            external: false,
+                            queryParams: { year: year },
+                            classes: ""
+                        },
+                        ` to view the users who participated in ${year}`
+                    ]
+                ]
+            },
+            {
+                type: "standard",
+                layout: "left",
+                content: [
+                    [
+                        "If you still can't find your username and you truely believe you did participate in 2024, send a DM to ",
+                        {
+                            linkText: "@the_real_monte",
+                            url: "https://sh.itjust.works/u/the_real_monte",
+                            external: true,
+                            queryParams: {},
+                            classes: ""
+                        },
+                        " and we can check the database."
+                    ]
+                ]
+            },
+        ]
+    }
+    return noStats;
+}
+
+async function displayUserStats() {
+    if (username !== "") {
+        const userData: JsonObject | null = await getUserStats(username, year);
+        if (userData) {
+            const tempHeader = createHeader("h2", username);
+            main.appendChild(tempHeader);
+            userData.blocks.forEach((block: any) => {
+                const structure = getBlockStructure(block, year);
+                if (block.type === "user-color-grid") {
+                    const colorStat = document.createElement('article');
+                    colorStat.setAttribute('class', `${block.layout} colorStat`);
+                    const pieChartContainer = document.createElement('div');
+                    pieChartContainer.setAttribute('id', 'colorCountsPieChart');
+                    colorStat.appendChild(pieChartContainer);
+                    const statSection = document.createElement('section');
+                    statSection.setAttribute('class', 'color-section');
+                    if (block.title) {
+                        const statHeader = createHeader('h3', block.title);
+                        statSection.appendChild(statHeader);
+                    }
+                    const toolTip = document.createElement('div');
+                    toolTip.setAttribute('id', 'tooltip');
+                    statSection.appendChild(toolTip);
+                    colorStat.appendChild(statSection);
+                    main.appendChild(colorStat);
+                } else {
+                    renderTree(structure, main);
+                }
+            });
+            if (userColorCounts) createColorCountPieChart(2025, userColorCounts, "colorCountsPieChart", true, "slice-clickable");
+        } else {
+            const noStats = displayNoStatsBlocks(username, year);
+            noStats.blocks.forEach((block: any) => {
+                const structure = getBlockStructure(block, year);
+                renderTree(structure, main);
+            });
+        }
+    } else {
+        console.warn("Didn't find username")
+    }
+}

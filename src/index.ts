@@ -1,76 +1,54 @@
 import { initializeApp, getYear, scrollAnimation } from "./main.js";
-import { ColorCount, YearStat } from "./models.js";
-import { canvas2023, canvas2024, canvas2025, colorCounts2023, colorCounts2024, colorCounts2025 } from "./yearStats.js";
-import { createColorStat, createLinkBlock, createImageStat, createSocialsBlock, createTextStat, createTopUsersStat, createGenerateBlock } from "./modules/statBlocks.js";
+import { ColorCount } from "./models.js";
 import { createColorCountPieChart } from "./modules/d3Graphics.js";
+import { getBlockStructure, renderTree } from "./modules/createNodeTree.js";
+import { createHeader } from "./modules/utils.js";
 
 let year: number = 0;
 const main = document.querySelector('main') as HTMLElement;
 
-function displayInfoForYear() {
-    let statsForYear: YearStat[] = [];
-    let colorCountsForYear: ColorCount[] = [];
-    switch (year) {
-        case 2023:
-            statsForYear = canvas2023;
-            colorCountsForYear = colorCounts2023;
-            break;
-        case 2024:
-            statsForYear = canvas2024;
-            colorCountsForYear = colorCounts2024;
-            break;
-        case 2025:
-            statsForYear = canvas2025;
-            colorCountsForYear = colorCounts2025;
-            break;
-        default:
-            statsForYear = canvas2025;
-            colorCountsForYear = colorCounts2025;
-            break;
-    }
-    const statsContainer = statsForYear.reduce((acc: HTMLElement, stat: YearStat) => {
-        switch (stat.type) {
-            case "text":
-                const textStat = createTextStat(stat);
-                acc.appendChild(textStat);
-                break;
-            case "colorCount":
-                const colorStat = createColorStat(stat);
-                acc.appendChild(colorStat);
-                break;
-            case "userList":
-                const topUsersStat = createTopUsersStat(stat, year);
-                acc.appendChild(topUsersStat);
-                break;
-            case "image":
-                const imageStat = createImageStat(stat);
-                acc.appendChild(imageStat);
-                break;
-            case "generate":
-                const generateBlock = createGenerateBlock(stat, year);
-                acc.appendChild(generateBlock);
-                break;
-            case "externalLinks":
-                const exteralLink = createLinkBlock(stat, true);
-                acc.appendChild(exteralLink);
-                break;
-            case "social":
-                const socailsBlock = createSocialsBlock(stat);
-                acc.appendChild(socailsBlock);
-                break;
-        }
-        return acc;
-    }, document.createElement('div'));
-    statsContainer.setAttribute('id', 'stats-container');
-    main.appendChild(statsContainer);
-    createColorCountPieChart(year, colorCountsForYear, "colorCountsPieChart", true, "slice-clickable");
-}
+year = getYear();
 
-initializeApp("Home", "Home", year !== 2026 ? true : false).then(() => {
-    year = getYear();
-    displayInfoForYear();
+initializeApp("Home", "Home", year !== 2026 ? true : false).then(async () => {
+    const response = await fetch(`https://raw.githubusercontent.com/CanvasStats/data-files/refs/heads/main/${year}/overview${year}.json`);
+    const yearData = await response.json();
+    console.log(yearData);
+    let colorCounts: ColorCount[] = [];
+    yearData.blocks.forEach((block: any) => {
+        const structure = getBlockStructure(block, year);
+        if (block.type === "color-grid") {
+            colorCounts = mapColorCountJsonToInterface(block.data);
+            const colorStat = document.createElement('article');
+            colorStat.setAttribute('class', `${block.layout} colorStat`);
+            const pieChartContainer = document.createElement('div');
+            pieChartContainer.setAttribute('id', 'colorCountsPieChart');
+            colorStat.appendChild(pieChartContainer);
+            const statSection = document.createElement('section');
+            statSection.setAttribute('class', 'color-section');
+            if (block.title) {
+                const statHeader = createHeader('h3', block.title);
+                statSection.appendChild(statHeader);
+            }
+            const toolTip = document.createElement('div');
+            toolTip.setAttribute('id', 'tooltip');
+            statSection.appendChild(toolTip);
+            colorStat.appendChild(statSection);
+            main.appendChild(colorStat);
+        } else {
+            renderTree(structure, main);
+        }
+    });
+    createColorCountPieChart(2025, colorCounts, "colorCountsPieChart", true, "slice-clickable");
     main.classList.remove('hide');
     const loading = document.getElementById('loading');
     if (loading) loading.remove();
     scrollAnimation(true);
 });
+
+function mapColorCountJsonToInterface(data: ColorCount[]) {
+    return data.reduce((acc: ColorCount[], currentCount: ColorCount) => {
+        const newCount: ColorCount = {class: currentCount['class'], label: currentCount['label'], count: currentCount['count'], hex: currentCount['hex']};
+        acc.push(newCount);
+        return acc;
+    }, []);
+}

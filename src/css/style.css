@@ -114,6 +114,10 @@
     line-height: 1 !important;
 }
 
+nav a {
+    cursor: pointer;
+}
+
 a {
     vertical-align: middle !important;
     line-height: 1 !important;

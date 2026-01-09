@@ -1,25 +1,20 @@
-export class Pixel {
-    constructor(
-        public username: string,
-        public xCoordinate: number,
-        public yCoordinate: number,
-        public colorHex: string,
-        public isTop: boolean,
-        public isUndo: boolean,
-        public isSpecial: boolean
-    ) {}
+export interface Pixel {
+    username: string;
+    xCoordinate: number;
+    yCoordinate: number;
+    colorHex: string;
+    isTop: boolean;
+    isUndo: boolean;
+    isSpecial: boolean;
 }
 
-export class User {
-    public readonly type = 'User';
-    constructor(
-        public username: string,
-        public userRank: number,
-        public pixelCount: number,
-        public xCord: number,
-        public yCord: number,
-        public cordCount: number
-    ) { }
+export interface User {
+    username: string;
+    userRank: number;
+    pixelCount: number;
+    xCord: number;
+    yCord: number;
+    cordCount: number;
 }
 
 export class ColorsCounts {
@@ -62,40 +57,39 @@ export class ColorsCounts {
     ) { }
 }
 
-export class Overview {
-    constructor(
-        public year: number,
-        public finalCanvas: Image,
-        public tags: Tag[],
-        public colorCounts: ColorCount[],
-        public links: Link[]
-    ) { }
+// export class Overview {
+//     constructor(
+//         public year: number,
+//         public finalCanvas: Image,
+//         public tags: Tag[],
+//         public colorCounts: ColorCount[],
+//         public links: Link[]
+//     ) { }
+// }
+
+export interface ColorCount {
+        class: string;
+        label: string;
+        count: number;
+        hex: string;
 }
 
-export class ColorCount {
-    constructor(
-        public colorVariable: string,
-        public colorName: string,
-        public count: number
-    ) {}
-}
-
-export class Tag {
-    constructor(
-        public id: number,
-        public type: string,
-        public content: string[]
-    ) {}
-}
+// export class Tag {
+//     constructor(
+//         public id: number,
+//         public type: string,
+//         public content: string[]
+//     ) { }
+// }
 
 export class Link {
     constructor(
-        public id: number,
         public linkText: string,
-        public onClick: string,
         public classes: string,
         public external: boolean,
-        public queryParams?: { [key: string]: any }
+        public queryParams?: { [key: string]: any },
+        public url?: string,
+        public page?: any
     ) { }
 }
 
@@ -104,24 +98,24 @@ export class Image {
         public id: number,
         public imageURL: string,
         public imageAlt: string
-    ) {}
+    ) { }
 }
 
-export class YearStat {
-    constructor(
-        public type: string,
-        public direction: string,
-        public icon: string | undefined,
-        public header: string | undefined,
-        public content: ContentPair[]
-    ) {}
-}
+// export class YearStat {
+//     constructor(
+//         public type: string,
+//         public direction: string,
+//         public icon: string | undefined,
+//         public header: string | undefined,
+//         public content: ContentPair[]
+//     ) { }
+// }
 
 export class ContentPair {
     constructor(
         public contentKey: string,
         public contentValue: string
-    ) {}
+    ) { }
 }
 
 export class UserMain {
@@ -131,7 +125,7 @@ export class UserMain {
         public canvas2023: boolean,
         public canvas2024: boolean,
         public canvas2025: boolean
-    ) {}
+    ) { }
 }
 
 export class StatImage {
@@ -140,30 +134,30 @@ export class StatImage {
         public imageAlt: string,
         public imageURL: string,
         public imageClass: string
-    ) {}
+    ) { }
 }
 
 export class CoordinatePair {
     constructor(
         public xCoordinate: number,
         public yCoordinate: number
-    ) {}
+    ) { }
 }
 
-export class ParagraphBlock {
-    constructor(
-        public parts: ContentPair[]
-    ) {}
-}
+// export class ParagraphBlock {
+//     constructor(
+//         public parts: ContentPair[]
+//     ) { }
+// }
 
-export class UserStat {
-    constructor(
-        public direction: string,
-        public iconType: string,
-        public iconText: string,
-        public statP: ParagraphBlock
-    ) {}
-}
+// export class UserStat {
+//     constructor(
+//         public direction: string,
+//         public iconType: string,
+//         public iconText: string,
+//         public statP: ParagraphBlock
+//     ) { }
+// }
 
 export class drawParams {
     constructor(
@@ -173,5 +167,31 @@ export class drawParams {
         public color: string,
         public special: string,
         public topOnly: string
-    ) {}
+    ) { }
+}
+
+export interface JsonObject {
+    year: number;
+    username: string | undefined;
+    blocks: JsonBlock[];
+
+}
+
+export interface JsonBlock {
+    type: string;
+    layout: string;
+    icon?: string;
+    title?: string;
+    content?: (string | (string | Link)[])[];
+    data?: ColorJsonObject[];
+    imageUrl?: string;
+    items?: ContentPair[];
+    buttons?: Link[];
+}
+
+export interface ColorJsonObject {
+    label: string;
+    class: string;
+    hex: string;
+    count: number;
 }

@@ -1,5 +1,6 @@
 import * as d3 from 'd3';
 import { ColorCount } from '../models';
+import { navigateTo } from './navigate';
 
 type PieArc = d3.PieArcDatum<ColorCount>;
 
@@ -9,7 +10,6 @@ interface AnimatablePathElement extends SVGPathElement {
 
 export function createColorCountPieChart(year: number, colorCounts: ColorCount[], chartContainerID: string, isLink: boolean, sliceClass: string) {
     //Setup Dimensions
-    console.log(`Colors for year: ${colorCounts.length}`);
     const width = 300;
     const height = 300;
     const radius = Math.min(width, height) / 2;
@@ -39,7 +39,7 @@ export function createColorCountPieChart(year: number, colorCounts: ColorCount[]
         .attr("class", "arc");
     g.append("path")
         .attr("class", sliceClass)
-        .style("fill", d => d.data.colorVariable)
+        .style("fill", d => d.data.hex)
         //Initialize the current state for transition
         .each(function (d) {
             const self = this as AnimatablePathElement;
@@ -61,10 +61,10 @@ export function createColorCountPieChart(year: number, colorCounts: ColorCount[]
         .selection() 
             .on("click", (event, d) => {
                 if (isLink) {
-                    if (d.data.colorName === "white") {
-                        window.location.href = `draw.html?sentFrom=home&year=${year}&color=${d.data.colorName.replace(" ", "-")}&background=black`;
+                    if (d.data.class === "white") {
+                        navigateTo("/draw", {params: {"sentFrom": "home", "color": d.data.class, "background": "black"}});
                     } else {
-                        window.location.href = `draw.html?sentFrom=home&year=${year}&color=${d.data.colorName.replace(" ", "-")}`;
+                        navigateTo("/draw", {params: {"sentFrom": "home", "color": d.data.class, "background": "white"}})
                     }
                 }
             })
@@ -75,13 +75,13 @@ export function createColorCountPieChart(year: number, colorCounts: ColorCount[]
                 .duration(200)
                 .style("opacity", 1)
             tooltip.html(`
-                    <span class="font-bold">${d.data.colorName}</span><br>
+                    <span class="font-bold">${d.data.label}</span><br>
                     ${d.data.count} pixels
                 `);
             d3.select(this).style("stroke-width", "4px");
         })
         .on("mousemove", function (event, d) {
-            tooltip.attr("class", d.data.colorName.replace(" ", "-"))
+            tooltip.attr("class", d.data.class)
         })
         .on("mouseout", function () {
             tooltip.transition()

@@ -2,6 +2,7 @@ import { getPixelsForDraw } from "./services/canvasService";
 import { initializeApp, getYear } from "./main";
 import { createButton } from "./modules/utils";
 import { Pixel, drawParams } from "./models";
+import { navigateTo } from "./modules/navigate";
 
 let year: number = 2025;
 let canvasWidth: number = 500;
@@ -28,8 +29,6 @@ let pixelsToDraw: Pixel[] = [];
 let filename: string = "";
 let drawTitleContent: string = "";
 
-//?sentFrom=user&year=2025&background=white&username=the_real_monte@sh.itjust.works
-
 initializeApp("Draw", "Draw", true).then(async () => {
     year = getYear();
     sentFrom = urlParams.get('sentFrom');
@@ -39,21 +38,21 @@ initializeApp("Draw", "Draw", true).then(async () => {
         if (sentFrom === "home") {
             //Create a button to return to the year overview
             const returnHomeButton = createButton('blue', `Back to the ${year} Overview`, "arrow_back");
-            returnHomeButton.addEventListener('click', () => window.location.href = `/?year=${year}`);
+            returnHomeButton.addEventListener('click', () => navigateTo('/', {params: {year: year}}));
             drawHeader.appendChild(returnHomeButton);
             drawTitleContent = `The image below  contains all the pixels placed during Canvas ${year}`;
             filename = `canvas${year}`
         } else if (sentFrom === "user") {
             //Create a button to return to the user's stats
             const returnToUserButton = createButton('blue', 'Back to your stats', "arrow_back");
-            returnToUserButton.addEventListener('click', () => window.location.href = `/user.html?year=${year}&user=${username}`);
+            returnToUserButton.addEventListener('click', () => navigateTo('/user', {params: {year: year, user: username}}));
             drawHeader.appendChild(returnToUserButton);
             drawTitleContent = `The image below contains all the pixels placed by ${username} during Canvas ${year}`;
             filename = `${username}-pixels-${year}`
         } else if (sentFrom === "search") {
             //Create a button to return to the search page
             const returnToUserButton = createButton('blue', 'Back to search', "arrow_back");
-            returnToUserButton.addEventListener('click', () => window.location.href = `/advanced-search.html`);
+            returnToUserButton.addEventListener('click', () => navigateTo('/advanced-search'));
             drawHeader.appendChild(returnToUserButton);
             if (username) {
                 drawTitleContent = `The image below contains all the pixels placed by ${username} during Canvas ${year}`;

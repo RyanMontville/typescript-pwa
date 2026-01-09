@@ -1,5 +1,5 @@
-import { ColorCount, ColorsCounts, ContentPair, ParagraphBlock, User, UserMain, UserStat } from "../models";
-import { getPixelDataForYear, getYearCounts } from "./canvasService";
+import { ColorCount, ColorsCounts, ContentPair, JsonObject, User, UserMain } from "../models";
+import { getYearCounts } from "./canvasService";
 import { fetchHTML } from "../main";
 import { getHexForColor } from "../modules/utils";
 
@@ -63,7 +63,6 @@ export async function getAllUserStatsForYear(year: number) {
                 const values = lines[i].split(',');
                 if (values.length === header.length) {
                     const user: User = {
-                        type: 'User',
                         username: values[usernameIndex]?.trim() || '',
                         userRank: +values[userRankIndex]?.trim() || 0,
                         pixelCount: +values[pixelCountIndex]?.trim() || 0,
@@ -108,24 +107,80 @@ export async function getUserStats(username: string, year: number) {
     if (allUsersData) {
         const user: User | undefined = allUsersData.find(user => user['username'] === username);
         if (user) {
-            let userStats: UserStat[] = [];
-            const rankStatP: ParagraphBlock = new ParagraphBlock([new ContentPair("text", `You ranked ${user['userRank']} out of ${totalUsers} users in ${year}`)]);
-            const rankStat: UserStat = new UserStat("left", "text", rankingString(user['userRank']), rankStatP);
-            userStats.push(rankStat);
-            const colorCountPlaceholder: UserStat = new UserStat("right", "", "colorCount", {parts: []});
-            userStats.push(colorCountPlaceholder);
-            const numColorsP: ParagraphBlock = new ParagraphBlock([new ContentPair("text", `You used ${await getNumColorsUsedForUsername(year, username)} out of the ${year===2023 ? "32" : "34"} colors`)]);
-            const numColorStat: UserStat = new UserStat("left", "icon", "colors", numColorsP);
-            userStats.push(numColorStat)
-            const pixelsPlacedP: ParagraphBlock = new ParagraphBlock([new ContentPair("text", `You placed ${user['pixelCount']} pixels throughout the event`)]);
-            const pixelsPlacedStat: UserStat = new UserStat("right", "icon", "grid_view", pixelsPlacedP);
-            userStats.push(pixelsPlacedStat);
-            const topCordP: ParagraphBlock = new ParagraphBlock([new ContentPair("text", `The coordinate you placed the most pixels on was (${user['xCord']}, ${user['yCord']}) - ${user['cordCount']} times (including the pixels you deleted)`)]);
-            const topCordStat: UserStat = new UserStat("left", "icon", "kid_star", topCordP);
-            userStats.push(topCordStat);
-            const drawLinks: UserStat = new UserStat("right", "", "drawLinks", {parts: []});
-            userStats.push(drawLinks);
-            return userStats;
+            let userJson: JsonObject = {
+                username: username,
+                year: year,
+                blocks: [
+                    {
+                        type: "standard",
+                        layout: "left",
+                        icon: "leaderboard",
+                        content: [
+                            `You ranked ${user['userRank']} out of ${totalUsers} users in ${year}`
+                        ]
+                    },
+                    {
+                        type: "user-color-grid",
+                        layout: "right",
+                        title: "Pixels by color",
+                        data: []
+                    },
+                    {
+                        type: "standard",
+                        layout: "left",
+                        icon: "colors",
+                        content: [
+                            `You used ${await getNumColorsUsedForUsername(year, username)} out of the ${year === 2023 ? "32" : "34"} colors`
+                        ]
+                    },
+                    {
+                        type: "standard",
+                        layout: "right",
+                        icon: "grid_view",
+                        content: [
+                            `You placed ${user['pixelCount']} pixels throughout the event`
+                        ]
+                    },
+                    {
+                        type: "standard",
+                        layout: "left",
+                        icon: "kid_star",
+                        content: [
+                            `The coordinate you placed the most pixels on was (${user['xCord']}, ${user['yCord']}) - ${user['cordCount']} times (including the pixels you deleted)`
+                        ]
+                    },
+                    {
+                        type: "button-group",
+                        layout: "right",
+                        title: "View your pixels placed in 2025",
+                        icon: "dashboard_customize",
+                        buttons: [
+                            {
+                                linkText: "on white background",
+                                classes: "white",
+                                page: "/draw",
+                                queryParams: { "sentFrom": "user", "year": year, "background": "white", "username": username },
+                                external: false
+                            },
+                            {
+                                linkText: "on black background",
+                                classes: "black",
+                                page: "/draw",
+                                queryParams: { "sentFrom": "user", "year": year, "background": "black", "username": username },
+                                external: false
+                            },
+                            {
+                                linkText: "on transparent background",
+                                classes: "dark-grey",
+                                page: "/draw",
+                                queryParams: { "sentFrom": "user", "year": year, "background": "transparent", "username": username },
+                                external: false
+                            }
+                        ]
+                    },
+                ]
+            }
+            return userJson;
         }
     }
     return null;
@@ -209,7 +264,13 @@ export async function GetColorCountForUsername(year: number, username: string) {
             keys.forEach((key, index) => {
                 if (values[index] > 0) {
                     const readableColor: string = key.replace(/([a-z])([A-Z])/g, "$1 $2",).toLowerCase();
-                    colors.push(new ColorCount(getHexForColor(readableColor), readableColor, values[index]));
+                    const newColor: ColorCount = {
+                        class: key,
+                        label: readableColor,
+                        hex: getHexForColor(readableColor),
+                        count: values[index]
+                    }
+                    colors.push(newColor);
                 }
             });
             colors.sort((a, b) => b.count - a.count);

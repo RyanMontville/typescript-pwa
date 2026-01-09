@@ -1,4 +1,4 @@
-import { initializeApp } from "./main";
+import { initializeApp, scrollAnimation } from "./main";
 
 initializeApp("F.A.Q.", "F.A.Q.", true).then(() => {
     const loading = document.getElementById('loading');

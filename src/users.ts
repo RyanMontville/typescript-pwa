@@ -3,6 +3,7 @@ import { getYears } from "./services/canvasService";
 import { initializeApp, getSearchString, getYear, doesURLContainYear, scrollAnimation } from "./main";
 import { ContentPair, User, UserMain } from "./models";
 import { createHeader, createButton } from "./modules/utils";
+import { navigateTo } from "./modules/navigate";
 
 let pageHeader: string = "";
 let userList: UserMain[] | undefined = undefined;
@@ -29,21 +30,21 @@ function displayUsersByUsername() {
             userRow.appendChild(usernameDiv);
             if (user['canvas2023']) {
                 const canvas2023Link = document.createElement('a');
-                canvas2023Link.setAttribute('href', `user.html?user=${user['username']}&year=2023`);
+                canvas2023Link.setAttribute('href', `user.html?username=${user['username']}&year=2023`);
                 canvas2023Link.setAttribute('class', 'btn pink');
                 canvas2023Link.textContent = "2023";
                 userRow.appendChild(canvas2023Link);
             }
             if (user['canvas2024']) {
                 const canvas2024Link = document.createElement('a');
-                canvas2024Link.setAttribute('href', `user.html?user=${user['username']}&year=2024`);
+                canvas2024Link.setAttribute('href', `user.html?username=${user['username']}&year=2024`);
                 canvas2024Link.setAttribute('class', 'btn purple');
                 canvas2024Link.textContent = "2024";
                 userRow.appendChild(canvas2024Link);
             }
             if (user['canvas2025']) {
                 const canvas2025Link = document.createElement('a');
-                canvas2025Link.setAttribute('href', `user.html?user=${user['username']}&year=2025`);
+                canvas2025Link.setAttribute('href', `user.html?username=${user['username']}&year=2025`);
                 canvas2025Link.setAttribute('class', 'btn mauve');
                 canvas2025Link.textContent = "2025";
                 userRow.appendChild(canvas2025Link);
@@ -92,14 +93,14 @@ function displayFilterOptions() {
         const yearButton = document.createElement('button');
         yearButton.setAttribute('class', `btn ${year['contentValue']}`);
         yearButton.textContent = year['contentKey'];
-        yearButton.addEventListener('click', () => window.location.href = `users?year=${year['contentKey']}`);
+        yearButton.addEventListener('click', () => navigateTo('/users', {params: {year: year['contentKey']}}));
         acc.appendChild(yearButton);
         return acc;
     }, document.createElement('section'));
     filtersSection.setAttribute('class', 'btn-wrapper hide');
     filtersSection.setAttribute('id', 'filterOptions')
     const allUsersButton = createButton('blue', "All Users");
-    allUsersButton.addEventListener('click', () => window.location.href = 'users.html');
+    allUsersButton.addEventListener('click', () => navigateTo('/users'));
     filtersSection.prepend(allUsersButton);
     const filterHeader = createHeader("h2", "Filter Users:");
     filtersSection.prepend(filterHeader);

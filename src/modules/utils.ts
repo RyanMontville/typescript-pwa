@@ -1,4 +1,4 @@
-import { ParagraphBlock, ContentPair } from "../models";
+import { ContentPair } from "../models";
 
 export function createHeader(headingSize: string, headerText: string) {
   let header: HTMLElement;
@@ -90,34 +90,6 @@ function shuffle(array: string[]): string[] {
 export function getRandomColor(index: number) {
   const colorsShuffled = shuffle(['white', 'light-grey', 'medium-grey', 'peach', 'beige', 'pink', 'magenta', 'mauve', 'purple', 'dark-purple', 'navy', 'blue', 'azure', 'aqua', 'light-teal', 'dark-teal', 'forest', 'dark-green', 'green', 'lime', 'pastel-yellow', 'yellow', 'orange', 'rust', 'maroon', 'rose', 'red', 'watermelon']);
   return `btn ${colorsShuffled[index]}`;
-}
-
-export function createParagraph(content: ParagraphBlock) {
-  let paragraph = content['parts'].reduce((acc: HTMLElement, part: ContentPair) => {
-    switch (part['contentKey']) {
-      case "text":
-        const partSpan = document.createElement('span');
-        partSpan.textContent = part['contentValue'];
-        acc.appendChild(partSpan);
-        break;
-      case "bold":
-        const partB = document.createElement('b');
-        partB.textContent = part['contentValue'];
-        acc.appendChild(partB);
-        break;
-      case "italics":
-        const partI = document.createElement('i');
-        partI.textContent = part['contentValue'];
-        acc.appendChild(partI);
-      default:
-        const partLink = document.createElement('a');
-        partLink.setAttribute('href', part['contentKey']);
-        partLink.textContent = part['contentValue']
-        acc.appendChild(partLink);
-    }
-    return acc;
-  }, document.createElement('p'));
-  return paragraph;
 }
 
 export function createButton(buttonColor: string, buttonText: string, iconName?: string) {

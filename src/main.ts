@@ -1,3 +1,5 @@
+import { ALL_APP_PATHS, AppPath, navigateTo } from "./modules/navigate";
+
 const years: number[] = [2023, 2024, 2025];
 
 const baseURL: string = "https://raw.githubusercontent.com/RyanMontville/typescript-pwa/refs/heads/main";
@@ -49,14 +51,9 @@ export async function initializeApp(partentPage: string, currentPage: string, sh
     search.classList.remove('hide');
   }
 
-
   //Set logo year image
   const logoYear = document.getElementById('logo-year') as HTMLElement;
   logoYear.setAttribute('src', `${imagesURL}/${year}/logo${year}.png`);
-
-  function goToYearHomepage() {
-    window.location.href = `index.html?year=${year}`
-  }
 
   const changeYear = document.getElementById('changeYear') as HTMLElement;
   changeYear.addEventListener('click', () => {
@@ -70,16 +67,17 @@ export async function initializeApp(partentPage: string, currentPage: string, sh
         const yearButton = document.createElement('button');
         yearButton.textContent = `${currYear}`;
         yearButton.addEventListener('click', () => {
-          let currentUrl = window.location.href.split("?")[0];
-          let urlParams = window.location.href.split("?")[1].split("&");
-          urlParams.forEach((param, index) => {
-            const paramPair = param.split("=");
-            if (paramPair[0] === "year") {
-              urlParams[index] = `year=${currYear}`;
-            }
-          });
-          const newParams = urlParams.join("&")
-          window.location.href = `${currentUrl}?${newParams}`;
+          const params = new URLSearchParams(window.location.search);
+          params.set('year', currYear.toString());
+          const currentPath = window.location.pathname.replace('/typescript-pwa/', '/') as AppPath;
+          const isValidPath = (path: string): path is AppPath => {
+            return (ALL_APP_PATHS as readonly string[]).includes(path);
+          };
+          if (isValidPath(currentPath)) {
+            navigateTo(currentPath, { params, replace: true });
+          } else {
+            navigateTo('/', { params, replace: true });
+          }
         });
         yearLi.appendChild(yearButton);
         acc.appendChild(yearLi);
@@ -90,8 +88,9 @@ export async function initializeApp(partentPage: string, currentPage: string, sh
     changeYearPopUp.append(yearsUl);
     const yearSelectionContainer = document.getElementById('changeYearContainer') as HTMLElement;
     yearSelectionContainer.style.display = 'flex';
+    yearSelectionContainer.classList.remove('hide');
   });
-  
+
 }
 
 export function getYear() {
@@ -145,7 +144,7 @@ async function loadNav() {
       nav.setAttribute('class', 'hide');
       nav.innerHTML = navData;
       const homeLink = nav.querySelector('#home') as HTMLElement;
-      homeLink.setAttribute('href', `/?year=${year}`);
+      homeLink.addEventListener('click', () => navigateTo('/', { params: { year: year } }))
       bodyElem.prepend(nav);
     }
   } catch (error) {
@@ -167,7 +166,7 @@ async function loadSearch() {
         e.preventDefault();
         const formData = new FormData(searchGroup);
         const searchString = formData.get('serch-input');
-        window.location.href = `users?search=${searchString}`;
+        if (searchString) navigateTo('/users', { params: { search: searchString.toString() } });
       })
       bodyElem.prepend(searchGroup);
     }
@@ -222,7 +221,7 @@ export function scrollAnimation(onlyOnce: boolean) {
         if (entry.isIntersecting) {
           entry.target.classList.add('show');
           if (onlyOnce) {
-            observer.unobserve(entry.target); 
+            observer.unobserve(entry.target);
           }
         } else {
           entry.target.classList.remove('show');
