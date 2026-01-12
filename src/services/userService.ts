@@ -1,5 +1,5 @@
 import { ColorCount, ColorsCounts, ContentPair, drawParams, JsonObject, Pixel, User, UserMain } from "../models";
-import { getPixelsForDraw, getYearCounts } from "./canvasService";
+import { getPixelsForDraw, getStartEndPixels, getYearCounts } from "./canvasService";
 import { fetchHTML } from "../main";
 import { getHexForColor } from "../modules/utils";
 
@@ -301,13 +301,14 @@ interface DataRow {
 
 export async function getPixelsPerHourForUser(year: number, username: string) {
     const userPixels = await getPixelsForDraw(new drawParams(year, username));
-    if (userPixels) {
+    const startEnd = await getStartEndPixels(year);
+    if (userPixels && startEnd) {
         if (userPixels.length === 0) return [];
         const sortedPixels = [...userPixels].sort(
             (a, b) => new Date(a.timePlaced).getTime() - new Date(b.timePlaced).getTime()
         );
-        const firstPixelDate = new Date(sortedPixels[0].timePlaced);
-        const lastPixelDate = new Date(sortedPixels[sortedPixels.length - 1].timePlaced);
+        const firstPixelDate = new Date(startEnd[0].timePlaced);
+        const lastPixelDate = new Date(startEnd[1].timePlaced);
         let currentHour = new Date(firstPixelDate);
         currentHour.setMinutes(0, 0, 0);
 

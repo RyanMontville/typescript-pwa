@@ -92,3 +92,8 @@ export async function getPixelsForDraw(params: drawParams) {
         return null;
     }
 }
+
+export async function getStartEndPixels(year: number) {
+    let pixels = await getPixelDataForYear(year);
+    if (pixels) return [pixels[0], pixels[pixels.length - 1]];
+}
