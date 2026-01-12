@@ -1,5 +1,5 @@
-import { ColorCount, ColorsCounts, ContentPair, JsonObject, User, UserMain } from "../models";
-import { getYearCounts } from "./canvasService";
+import { ColorCount, ColorsCounts, ContentPair, drawParams, JsonObject, Pixel, User, UserMain } from "../models";
+import { getPixelsForDraw, getYearCounts } from "./canvasService";
 import { fetchHTML } from "../main";
 import { getHexForColor } from "../modules/utils";
 
@@ -150,8 +150,13 @@ export async function getUserStats(username: string, year: number) {
                         ]
                     },
                     {
+                        type: "graph",
+                        layout: "left",
+                        title: "Pixels Placed Per Hour"
+                    },
+                    {
                         type: "button-group",
-                        layout: "right",
+                        layout: "left",
                         title: "View your pixels placed in 2025",
                         icon: "dashboard_customize",
                         buttons: [
@@ -286,5 +291,41 @@ export async function getNumColorsUsedForUsername(year: number, username: string
         return colorCounts.length;
     } else {
         return 0;
+    }
+}
+
+interface DataRow {
+    timestamp: Date;
+    pixelCount: number;
+}
+
+export async function getPixelsPerHourForUser(year: number, username: string) {
+    const userPixels = await getPixelsForDraw(new drawParams(year, username));
+    if (userPixels) {
+        if (userPixels.length === 0) return [];
+        const sortedPixels = [...userPixels].sort(
+            (a, b) => new Date(a.timePlaced).getTime() - new Date(b.timePlaced).getTime()
+        );
+        const firstPixelDate = new Date(sortedPixels[0].timePlaced);
+        const lastPixelDate = new Date(sortedPixels[sortedPixels.length - 1].timePlaced);
+        let currentHour = new Date(firstPixelDate);
+        currentHour.setMinutes(0, 0, 0);
+
+        const result: DataRow[] = [];
+        while (currentHour <= lastPixelDate) {
+            const nextHour = new Date(currentHour);
+            nextHour.setHours(currentHour.getHours() + 1);
+            const pixelsInHour = sortedPixels.filter((p) => {
+                const pDate = new Date(p.timePlaced);
+                return pDate >= currentHour && pDate < nextHour;
+            });
+
+            result.push({
+                timestamp: new Date(currentHour.toISOString()),
+                pixelCount: pixelsInHour.length,
+            });
+            currentHour = nextHour;
+        }
+        return result;
     }
 }

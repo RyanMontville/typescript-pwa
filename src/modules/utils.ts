@@ -145,3 +145,13 @@ export function getHexForColor(color: string) {
     default: return '#000000';
   }
 }
+
+export function makeElement(elementType: string, elementId: string | null, elementClass: string | null, elementText: string | null) {
+  const newElement = document.createElement(elementType);
+  if (elementId) newElement.setAttribute('id', elementId);
+  if (elementClass) {
+    newElement.setAttribute('class', elementClass);
+  }
+  if (elementText) newElement.textContent = elementText;
+  return newElement;
+}

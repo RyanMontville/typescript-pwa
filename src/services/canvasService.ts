@@ -30,6 +30,7 @@ export async function getPixelDataForYear(year: number) {
             const isTopIndex = header.indexOf('isTop');
             const isUndoIndex = header.indexOf('isUndo');
             const isSpecialIndex = header.indexOf('isSpecial');
+            const timePlacedIndex = header.indexOf("timePlaced");
 
             const pixelList: Pixel[] = [];
             for (let i = 1; i < lines.length; i++) {
@@ -42,7 +43,8 @@ export async function getPixelDataForYear(year: number) {
                         colorHex: values[colorHexIndex]?.trim() || '',
                         isTop: +values[isTopIndex]?.trim() == 1 || false,
                         isUndo: +values[isUndoIndex]?.trim() == 1 || false,
-                        isSpecial: +values[isSpecialIndex]?.trim() == 1 || false
+                        isSpecial: +values[isSpecialIndex]?.trim() == 1 || false,
+                        timePlaced: values[timePlacedIndex]?.trim() || ''
                     }
                     pixelList.push(pixel)
                 } else {
@@ -62,7 +64,7 @@ export async function getPixelsForDraw(params: drawParams) {
     let pixels = await getPixelDataForYear(params['year']);
     if (pixels) {
         //Get just the user's pixels
-        if (params['username'] !== "") {
+        if (params['username']) {
             pixels = pixels.filter(pixel => pixel['username'] === params['username']);
         }
         if (params['undo']) {
@@ -70,17 +72,17 @@ export async function getPixelsForDraw(params: drawParams) {
         } else {
             pixels = pixels.filter(pixel => !pixel['isUndo']);
         }
-        if (params['color'] !== "") {
+        if (params['color']) {
             pixels = pixels.filter(pixel => pixel['colorHex'] === params['color']);
         }
-        if (params['topOnly'] !== "") {
+        if (params['topOnly']) {
             if (params['topOnly'] === "true") {
                 pixels = pixels.filter(pixel => pixel['isTop']);
             } else {
                 pixels = pixels.filter(pixel => !pixel['isTop']);
             }
         }
-        if (params['special'] !== "") {
+        if (params['special']) {
             if (params['special'] === "template") {
                 pixels = pixels.filter(pixel => pixel['isSpecial']);
             }

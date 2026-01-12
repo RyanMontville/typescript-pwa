@@ -107,7 +107,7 @@ initializeApp("Draw", "Draw", true).then(async () => {
         drawTitleContent += " in reverse order";
         filename += '-reverse';
     }
-    const pixelData = await getPixelsForDraw(new drawParams(year, undo, username, color, special, topOnly));
+    const pixelData = await getPixelsForDraw(new drawParams(year, username,  undo, color, special, topOnly));
     if (pixelData) pixelsToDraw = pixelData;
     //Set the Canvas dimensions for the year
     if (year === 2023) {

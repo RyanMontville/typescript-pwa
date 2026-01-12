@@ -8,6 +8,11 @@ interface AnimatablePathElement extends SVGPathElement {
     _current: PieArc;
 }
 
+interface PixelData {
+    timestamp: Date;
+    pixelCount: number;
+}
+
 export function createColorCountPieChart(year: number, colorCounts: ColorCount[], chartContainerID: string, isLink: boolean, sliceClass: string) {
     //Setup Dimensions
     const width = 300;
@@ -58,16 +63,16 @@ export function createColorCountPieChart(year: number, colorCounts: ColorCount[]
                 return arc(i(t))!;
             };
         })
-        .selection() 
-            .on("click", (event, d) => {
-                if (isLink) {
-                    if (d.data.class === "white") {
-                        navigateTo("/draw", {params: {"sentFrom": "home", "color": d.data.class, "background": "black"}});
-                    } else {
-                        navigateTo("/draw", {params: {"sentFrom": "home", "color": d.data.class, "background": "white"}})
-                    }
+        .selection()
+        .on("click", (event, d) => {
+            if (isLink) {
+                if (d.data.class === "white") {
+                    navigateTo("/draw", { params: { "sentFrom": "home", "color": d.data.class, "background": "black" } });
+                } else {
+                    navigateTo("/draw", { params: { "sentFrom": "home", "color": d.data.class, "background": "white" } })
                 }
-            })
+            }
+        })
         //ToolTip
         .selection()
         .on("mouseover", function (event, d) {
@@ -89,4 +94,63 @@ export function createColorCountPieChart(year: number, colorCounts: ColorCount[]
                 .style("opacity", 0);
             d3.select(this).style("stroke-width", "2px");
         });
+}
+
+interface DataRow {
+    timestamp: Date;
+    pixelCount: number;
+}
+
+export function createLineGraph(csvUrl: string | DataRow[], chartContainerID: string) {
+    const margin = { top: 20, right: 30, bottom: 50, left: 50 };
+    const width = 800 - margin.left - margin.right;
+    const height = 400 - margin.top - margin.bottom;
+    const parseTime = d3.timeParse("%Y-%m-%d %H:%M:%S");
+
+    async function createChart() {
+        let rawData!: string | DataRow[];
+        if (typeof csvUrl === "string") {
+            rawData = await d3.csv(csvUrl, (d) => {
+            return {
+                timestamp: parseTime(d.timestamp!),
+                pixelCount: +d.pixelCount!
+            } as DataRow;
+        });
+        } else {
+            rawData = csvUrl;
+        }
+        const svg = d3.select(chartContainerID)
+            .append("svg")
+            .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+            .attr("preserveAspectRatio", "xMinYMin meet")
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+        const x = d3.scaleTime()
+            .domain(d3.extent(rawData, d => d.timestamp) as [Date, Date])
+            .range([0, width]);
+
+        const y = d3.scaleLinear()
+            .domain([0, d3.max(rawData, d => d.pixelCount) || 0])
+            .nice()
+            .range([height, 0]);
+        const line = d3.line<DataRow>()
+            .x(d => x(d.timestamp))
+            .y(d => y(d.pixelCount))
+            .curve(d3.curveMonotoneX);
+
+        svg.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(x).ticks(5));
+
+        svg.append("g")
+            .call(d3.axisLeft(y));
+        svg.append("path")
+            .datum(rawData)
+            .attr("fill", "none")
+            .attr("stroke", "steelblue")
+            .attr("stroke-width", 2)
+            .attr("d", line);
+    }
+
+    createChart();
 }

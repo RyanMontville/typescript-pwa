@@ -6,6 +6,7 @@ export interface Pixel {
     isTop: boolean;
     isUndo: boolean;
     isSpecial: boolean;
+    timePlaced: string;
 }
 
 export interface User {
@@ -57,30 +58,12 @@ export class ColorsCounts {
     ) { }
 }
 
-// export class Overview {
-//     constructor(
-//         public year: number,
-//         public finalCanvas: Image,
-//         public tags: Tag[],
-//         public colorCounts: ColorCount[],
-//         public links: Link[]
-//     ) { }
-// }
-
 export interface ColorCount {
         class: string;
         label: string;
         count: number;
         hex: string;
 }
-
-// export class Tag {
-//     constructor(
-//         public id: number,
-//         public type: string,
-//         public content: string[]
-//     ) { }
-// }
 
 export class Link {
     constructor(
@@ -100,17 +83,6 @@ export class Image {
         public imageAlt: string
     ) { }
 }
-
-// export class YearStat {
-//     constructor(
-//         public type: string,
-//         public direction: string,
-//         public icon: string | undefined,
-//         public header: string | undefined,
-//         public content: ContentPair[]
-//     ) { }
-// }
-
 export class ContentPair {
     constructor(
         public contentKey: string,
@@ -144,29 +116,14 @@ export class CoordinatePair {
     ) { }
 }
 
-// export class ParagraphBlock {
-//     constructor(
-//         public parts: ContentPair[]
-//     ) { }
-// }
-
-// export class UserStat {
-//     constructor(
-//         public direction: string,
-//         public iconType: string,
-//         public iconText: string,
-//         public statP: ParagraphBlock
-//     ) { }
-// }
-
 export class drawParams {
     constructor(
         public year: number,
-        public undo: boolean,
-        public username: string,
-        public color: string,
-        public special: string,
-        public topOnly: string
+        public username?: string,
+        public undo?: boolean,
+        public color?: string,
+        public special?: string,
+        public topOnly?: string
     ) { }
 }
 
@@ -184,7 +141,7 @@ export interface JsonBlock {
     title?: string;
     content?: (string | (string | Link)[])[];
     data?: ColorJsonObject[];
-    imageUrl?: string;
+    url?: string;
     items?: ContentPair[];
     buttons?: Link[];
 }
