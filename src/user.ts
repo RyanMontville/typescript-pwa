@@ -18,6 +18,7 @@ let userColorCounts: ColorCount[] | null = null;
 let pixelsPerHour: DataRow[] | undefined = undefined;
 
 initializeApp("users", "", true).then(async () => {
+    const start = performance.now();
     year = getYear();
     // Get the username from the url
     const urlParams = new URLSearchParams(window.location.search);
@@ -31,10 +32,11 @@ initializeApp("users", "", true).then(async () => {
     const loading = document.getElementById('loading');
     if (loading) loading.remove();
     scrollAnimation(true);
+    const end = performance.now();
+    console.log(`Execution time: ${end - start} milliseconds`);
 });
 
 function displayNoStatsBlocks(username: string | null, year: number) {
-    console.log(`Username is ${username?.length}`)
     const noStats: JsonObject = {
         year: year,
         username: username ? username : "",

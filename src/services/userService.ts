@@ -1,5 +1,5 @@
 import { ColorCount, ColorsCounts, ContentPair, drawParams, JsonObject, Pixel, User, UserMain } from "../models";
-import { getPixelsForDraw, getStartEndPixels, getYearCounts } from "./canvasService";
+import { getPixelsForDraw, getYearCounts } from "./canvasService";
 import { fetchHTML } from "../main";
 import { getHexForColor } from "../modules/utils";
 
@@ -300,15 +300,17 @@ interface DataRow {
 }
 
 export async function getPixelsPerHourForUser(year: number, username: string) {
-    const userPixels = await getPixelsForDraw(new drawParams(year, username));
-    const startEnd = await getStartEndPixels(year);
-    if (userPixels && startEnd) {
-        if (userPixels.length === 0) return [];
-        const sortedPixels = [...userPixels].sort(
+    const pixelsForYear = await getPixelsForDraw(new drawParams(year));
+    if (pixelsForYear) {
+        const firstPixel = pixelsForYear[0];
+        const lastPixel = pixelsForYear[pixelsForYear.length-1];
+        const pixelsForUser = pixelsForYear.filter(pixel => pixel['username'] === username);
+        if (pixelsForUser.length === 0) return [];
+        const sortedPixels = [...pixelsForUser].sort(
             (a, b) => new Date(a.timePlaced).getTime() - new Date(b.timePlaced).getTime()
         );
-        const firstPixelDate = new Date(startEnd[0].timePlaced);
-        const lastPixelDate = new Date(startEnd[1].timePlaced);
+        const firstPixelDate = new Date(firstPixel.timePlaced);
+        const lastPixelDate = new Date(lastPixel.timePlaced);
         let currentHour = new Date(firstPixelDate);
         currentHour.setMinutes(0, 0, 0);
 
